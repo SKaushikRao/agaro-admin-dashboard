@@ -1,9 +1,9 @@
-import { defineType, defineField, defineArrayMember } from 'sanity'
+import { defineType, defineField } from 'sanity'
 import { DocumentTextIcon } from '@sanity/icons'
 
-export const article = defineType({
-  name: 'article',
-  title: 'Article & Post',
+export const communitySubmission = defineType({
+  name: 'communitySubmission',
+  title: 'Community Submission',
   type: 'document',
   icon: DocumentTextIcon,
   fields: [
@@ -55,13 +55,6 @@ export const article = defineType({
       hidden: ({ parent }) => parent?.type !== 'video',
     }),
     defineField({
-      name: 'author',
-      title: 'Author / Provider',
-      type: 'reference',
-      to: [{ type: 'author' }],
-      description: 'Author or institution who created or published this content',
-    }),
-    defineField({
       name: 'subject',
       title: 'Primary Subject',
       type: 'reference',
@@ -73,10 +66,10 @@ export const article = defineType({
       title: 'Categories',
       type: 'array',
       of: [
-        defineArrayMember({
+        {
           type: 'reference',
           to: [{ type: 'category' }],
-        }),
+        },
       ],
     }),
     defineField({
@@ -84,9 +77,9 @@ export const article = defineType({
       title: 'Tags',
       type: 'array',
       of: [
-        defineArrayMember({
+        {
           type: 'string',
-        }),
+        },
       ],
       options: {
         layout: 'tags',
@@ -122,23 +115,9 @@ export const article = defineType({
     }),
     defineField({
       name: 'publishedAt',
-      title: 'Publication Date',
+      title: 'Submission Date',
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
-    }),
-    defineField({
-      name: 'order',
-      title: 'Display Order',
-      type: 'number',
-      description: 'Order priority in lists (lower numbers appear first)',
-      initialValue: 10,
-    }),
-    defineField({
-      name: 'isFeatured',
-      title: 'Featured Content',
-      type: 'boolean',
-      description: 'Highlight on the homepage and subject showcases',
-      initialValue: false,
     }),
     defineField({
       name: 'status',
@@ -153,50 +132,28 @@ export const article = defineType({
         layout: 'radio',
       },
       initialValue: 'pending',
-      description: 'Pending articles are awaiting review. Approved articles are visible on the website. Rejected articles are hidden.',
-    }),
-    defineField({
-      name: 'isVisible',
-      title: 'Published / Visible on Public Website',
-      type: 'boolean',
-      initialValue: false,
-      description: 'Only visible articles will be displayed on the public website. Automatically set to true when status is approved.',
-      hidden: true,
-    }),
-    defineField({
-      name: 'submissionType',
-      title: 'Submission Type',
-      type: 'string',
-      options: {
-        list: [
-          { title: 'Editorial', value: 'editorial' },
-          { title: 'Community Submission', value: 'community' },
-        ],
-        layout: 'radio',
-      },
-      initialValue: 'editorial',
-      description: 'Editorial articles are written by staff. Community submissions are from visitors.',
+      description: 'Pending submissions are awaiting review. Approved submissions are visible on the website. Rejected submissions are hidden.',
     }),
     defineField({
       name: 'submitterName',
       title: 'Submitter Name',
       type: 'string',
-      description: 'Name of the person who submitted this (for community submissions)',
-      hidden: ({ parent }) => parent?.submissionType !== 'community',
+      description: 'Name of the person who submitted this',
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: 'submitterEmail',
       title: 'Submitter Email',
       type: 'string',
-      description: 'Email of the person who submitted this (for community submissions)',
-      hidden: ({ parent }) => parent?.submissionType !== 'community',
+      description: 'Email of the person who submitted this',
+      validation: (rule) => rule.required().email(),
     }),
     defineField({
       name: 'body',
       title: 'Article Body',
       type: 'array',
       of: [
-        defineArrayMember({
+        {
           type: 'block',
           styles: [
             { title: 'Normal', value: 'normal' },
@@ -241,37 +198,30 @@ export const article = defineType({
               },
             ],
           },
-        }),
-        defineArrayMember({
+        },
+        {
           type: 'pteImage',
-        }),
-        defineArrayMember({
+        },
+        {
           type: 'quote',
-        }),
+        },
       ],
-    }),
-    defineField({
-      name: 'seo',
-      title: 'SEO Settings',
-      type: 'seo',
     }),
   ],
   preview: {
     select: {
       title: 'title',
-      authorName: 'author.name',
       subjectTitle: 'subject.title',
       media: 'coverImage',
       type: 'type',
       status: 'status',
-      submissionType: 'submissionType',
+      submitterName: 'submitterName',
     },
-    prepare({ title, authorName, subjectTitle, media, type, status, submissionType }) {
-      const parts = [subjectTitle, authorName, type].filter(Boolean).join(' • ')
+    prepare({ title, subjectTitle, media, type, status, submitterName }) {
+      const parts = [subjectTitle, submitterName, type].filter(Boolean).join(' • ')
       const statusEmoji = status === 'pending' ? '⏳' : status === 'approved' ? '✅' : status === 'rejected' ? '❌' : ''
-      const submissionLabel = submissionType === 'community' ? '[Community] ' : ''
       return {
-        title: `${statusEmoji} ${submissionLabel}${title || 'Untitled'}`,
+        title: `${statusEmoji} ${title || 'Untitled'}`,
         subtitle: parts || 'No details',
         media,
       }
